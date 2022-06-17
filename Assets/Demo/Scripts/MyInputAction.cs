@@ -7,12 +7,15 @@ public class MyInputAction : MonoBehaviour
 {
     [SerializeField] private Camera cam;
     [SerializeField] private Transform pointer;
+    [SerializeField] private RayCastManager rayCastManager;
 
     public Vector3 PointerPos { get => pointerPos; }
-    public bool IsClicked { get => isClicked; }
+    public bool IsPressed { get => isPressed; }
+    public bool IsTap { get => isTap; }
 
     private float speedOffset = .1f;
-    private bool isClicked = false;
+    private bool isTap = false;
+    private bool isPressed = false;
     private Vector2 movement;
     private Vector2 pointerPos;
     private float rotx, roty;
@@ -27,7 +30,7 @@ public class MyInputAction : MonoBehaviour
         transform.Translate(pos, Space.Self);
 
 
-        if (!isClicked)
+        if (!isPressed)
             return;
 
         float RotationX = HorizontalSensitivity * rotx * Time.deltaTime;
@@ -41,13 +44,20 @@ public class MyInputAction : MonoBehaviour
     }
 
 
-
-    public void OnClick(InputAction.CallbackContext _context)
+    public void OnTap(InputAction.CallbackContext _context)
     {
         var input = _context.ReadValueAsButton();
+        isTap = input;
+        rayCastManager.OpenUI();
+    }
+    public void OnPressed(InputAction.CallbackContext _context)
+    {
+        var input = _context.ReadValueAsButton();
+        isPressed = input;
         //Debug.Log("OnClick: " + input);
-        isClicked = input;
-        RaycastTarget();
+
+        if (pointer != null)
+            RaycastTarget();
     }
     public void OnPointerMove(InputAction.CallbackContext _context)
     {
@@ -83,6 +93,5 @@ public class MyInputAction : MonoBehaviour
         {
             pointer.transform.position = hit.point;
         }
-
     }
 }
