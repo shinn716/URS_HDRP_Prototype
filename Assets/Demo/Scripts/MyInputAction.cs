@@ -7,7 +7,6 @@ public class MyInputAction : MonoBehaviour
 {
     [SerializeField] private Camera cam;
     [SerializeField] private Transform pointer;
-    [SerializeField] private RayCastManager rayCastManager;
 
     public Vector3 PointerPos { get => pointerPos; }
     public bool IsPressed { get => isPressed; }
@@ -17,11 +16,9 @@ public class MyInputAction : MonoBehaviour
     private bool isTap = false;
     private bool isPressed = false;
     private Vector2 movement;
+    private Vector2 inputLook;
     private Vector2 pointerPos;
     private float rotx, roty;
-
-    float HorizontalSensitivity = 20.0f;
-    float VerticalSensitivity = 20.0f;
 
     private void Update()
     {
@@ -29,32 +26,27 @@ public class MyInputAction : MonoBehaviour
         pos *= speedOffset;
         transform.Translate(pos, Space.Self);
 
+        //if (!isPressed)
+        //    return;
 
-        if (!isPressed)
-            return;
+        float x = -rotx * Time.deltaTime * 7;
+        float y = -roty * Time.deltaTime * 7;
 
-        float RotationX = HorizontalSensitivity * rotx * Time.deltaTime;
-        float RotationY = VerticalSensitivity * roty * Time.deltaTime;
-        Vector3 CameraRotation = cam.transform.rotation.eulerAngles;
-
-        CameraRotation.x -= RotationY;
-        CameraRotation.y += RotationX;
-
-        cam.transform.rotation = Quaternion.Euler(CameraRotation);
+        Rotation(x, y);
     }
+
+
 
 
     public void OnTap(InputAction.CallbackContext _context)
     {
         var input = _context.ReadValueAsButton();
         isTap = input;
-        rayCastManager.OpenUI();
     }
     public void OnPressed(InputAction.CallbackContext _context)
     {
         var input = _context.ReadValueAsButton();
         isPressed = input;
-        //Debug.Log("OnClick: " + input);
 
         if (pointer != null)
             RaycastTarget();
@@ -63,7 +55,6 @@ public class MyInputAction : MonoBehaviour
     {
         var input = _context.ReadValue<Vector2>();
         pointerPos = input;
-        //Debug.Log("OnMouseMove: " + input);
     }
 
     public void OnRotationX(InputAction.CallbackContext Context)
@@ -81,17 +72,31 @@ public class MyInputAction : MonoBehaviour
     {
         var input = _context.ReadValue<Vector2>();
         movement = input;
-        //Debug.Log("OnPressedWASD: " + input);
+    }
+
+    public void OnLook(InputAction.CallbackContext value)
+    {
+        inputLook = value.ReadValue<Vector2>();
+        rotx = inputLook.x;
+        roty = inputLook.y;
     }
 
 
     private void RaycastTarget()
     {
-        RaycastHit hit;
         Ray ray = cam.ScreenPointToRay(pointerPos);
-        if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out RaycastHit hit))
         {
             pointer.transform.position = hit.point;
         }
+    }
+
+    private void Rotation(float posx, float posy)
+    {
+        cam.transform.Rotate(new Vector3(posy, -posx, 0));
+        var rx = Mathf.Repeat(cam.transform.eulerAngles.x + 180, 360) - 180;
+        var ry = cam.transform.eulerAngles.y;
+        rx = Mathf.Clamp(rx, -80, 80);
+        cam.transform.rotation = Quaternion.Euler(rx, ry, 0);
     }
 }
